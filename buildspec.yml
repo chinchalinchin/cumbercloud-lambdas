@@ -35,13 +35,15 @@ phases:
                     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
 
-  # post_build:
-  #   commands:
-  #     - |
-  #       aws lambda update-function-code \
-  #                     --function-name ${APPLICATION}-forward-email \
-  #                     --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
-  #     - |
-  #       aws lambda update-function-code \
-  #                     --function-name ${APPLICATION}-send-email \
-  #                     --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
+  post_build:
+    commands:
+      # Push email forwarding lambda
+      - |
+        aws lambda update-function-code \
+                      --function-name ${APPLICATION}-forward-email \
+                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
+      # Build email forwarding lambda
+      - |
+        aws lambda update-function-code \
+                      --function-name ${APPLICATION}-send-email \
+                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
