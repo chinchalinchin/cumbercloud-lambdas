@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: "Resources to hook a Lambda function into an API Gateway endpoint. The endpoint will produce a logstream into CloudWatch."
+
+Parameters:
+  applicationName:
+    Type: String
+    Description: Name of the web application
+    Default: demo
+  certificateArn:
+    Type: String
+    Description: ARN of the ACM certificate used to sign requests on the domain.
+  hostedZoneId:
+    Type: String
+    Description: Physical ID of the hosted zone where the domain is being served.
+  domainName:
+    Type: String
+    Description: Domain name that is hosting the application
+
+Resources:
+  LambdaExecutorRole:
+    Type: AWS::IAM::Role
+    Description: Role to allow Lambda functions to access other services
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: 
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Sub "${applicationName}-secrets-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SecretManagerPermissions
+                Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:UpdateSecret
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${applicationName}*"
+              - Sid: SESPermissions
+                Effect: Allow
+                Action:
+                  - ses:Send*
+                  - s3:GetObject
+                Resource: 
+                  - !Sub arn:aws:s3:::${applicationName}-email/*
+                  - !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/*
+              - Sid: LogPermissions
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                  - logs:PutLogEvents
+                Resource: '*'
+      RoleName: !Sub ${applicationName}-lambda-executor
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: !Sub ${applicationName}-lambda
+      Code:
+        ImageUri: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-lambda:latest"
+      PackageType: Image
+      Role: !GetAtt LambdaExecutorRole.Arn
+      Timeout: 180
+      Environment:
+        Variables:
+          MailS3Bucket: !Sub ${applicationName}-email
+          MailS3Prefix: mail
+          MailSender: design@cumberland-cloud.com
+          MailRecipient: chinchalinchin@gmail.com
+          Region: !Sub ${AWS::Region}
