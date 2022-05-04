@@ -18,11 +18,30 @@ phases:
 
   build:
     commands:
+      # Build email forwarding lambda
       - |
-        docker build -t ${APPLICATION}-lambda:latest .
-        docker tag ${APPLICATION}-lambda:latest \
-                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-lambda:latest
-        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-lambda:latest
-        aws lambda update-function-code \
-                      --function-name ${APPLICATION}-lambda \
-                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-lambda:latest
+        docker build --tag ${APPLICATION}-forward-email:latest \
+                      --file Dockerfile \
+                      ./lambdas/email/forward/
+        docker tag ${APPLICATION}-forward-email:latest \
+                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
+      # Build email sending lambda
+      - |
+        docker build --tag ${APPLICATION}-send-email:latest \
+                      --file Dockerfile \
+                      ./lambdas/emails/send/
+        docker tag ${APPLICATION}-send-email:latest \
+                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
+
+  # post_build:
+  #   commands:
+  #     - |
+  #       aws lambda update-function-code \
+  #                     --function-name ${APPLICATION}-forward-email \
+  #                     --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
+  #     - |
+  #       aws lambda update-function-code \
+  #                     --function-name ${APPLICATION}-send-email \
+  #                     --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
