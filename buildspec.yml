@@ -34,6 +34,22 @@ phases:
         docker tag ${APPLICATION}-send-email:latest \
                     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
+      # Build token lambda
+      - |
+        docker build --tag ${APPLICATON}-token:latest \
+                      --file Dockerfile \
+                      ./lambdas/auth/token/
+        docker tag ${APPLICATION}-token:latest \
+                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-token:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-token:latest
+      # Build register lambda
+      - | 
+        docker build --tag ${APPLICATION}-register:latest \
+                      --file Dockerfile \
+                      ./lambdas/auth/register/
+        docker tag ${APPLICATION}-register:latest \
+                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-token:latest
 
   post_build:
     commands:
