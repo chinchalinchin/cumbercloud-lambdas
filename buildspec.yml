@@ -57,8 +57,18 @@ phases:
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-forward-email \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
-      # Build email forwarding lambda
+      # Push email sending lambda
       - |
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-send-email \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
+      # Push token lambda
+      - |
+        aws lambda update-function-code \
+                      --function-name ${APPLICATION}-token \
+                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-token:latest
+      # Push register lambda
+      - |
+        aws lambda update-function-code \
+                      --function-name ${APPLICATION}-register \
+                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
