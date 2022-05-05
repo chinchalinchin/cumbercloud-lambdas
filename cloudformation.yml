@@ -171,6 +171,49 @@ Resources:
       ParentId: !Ref InnoLabRootResource
       PathPart: mail
 
+  SendEmailMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref RestAPI
+      ResourceId: !Ref SendEmailResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        # INTEGRATION HTTP METHOD MUST BE POST
+         # NOTE: API Gateway transforms all incoming requests into POSTS
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendEmailLambda.Arn}/invocations"
+
+  SendEmailCORSMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      RestApiId: !Ref RestAPI
+      ResourceId: !Ref PathResource
+      HttpMethod: OPTIONS
+      Integration:
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+            method.response.header.Access-Control-Allow-Methods: "'*'"
+            method.response.header.Access-Control-Allow-Origin: "'*'"
+          ResponseTemplates:
+            application/json: ''
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        Type: MOCK
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: 'Empty'
+        ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+            
   RestAPIDomainName:
     Type: 'AWS::ApiGateway::DomainName'
     Properties:
@@ -197,6 +240,15 @@ Resources:
           AliasTarget:
             HostedZoneId: !GetAtt RestAPIDomainName.DistributionHostedZoneId
             DNSName: !GetAtt RestAPIDomainName.DistributionDomainName
+
+  SendEmailApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt SendEmailLambda.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: 
+        !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestAPI}/production/*
 
   ##############################################
   # IAM RESOURCES

@@ -9,8 +9,8 @@ The frontend source for this application can be found [here](https://github.com/
 ### Local
 
 ```shell
-docker build --tag cumbercloud-send-email --file Dockerfile ./lambdas/email/send/
-docker build --tag cumbercloud-forward-email --file Dockerfile ./lambdas/email/forward/
+docker build --tag cumbercloud-send-email:latest --file Dockerfile ./lambdas/email/send/
+docker build --tag cumbercloud-forward-email:latest --file Dockerfile ./lambdas/email/forward/
 ```
 
 TODO
