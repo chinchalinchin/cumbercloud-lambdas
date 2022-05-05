@@ -5,6 +5,7 @@ def lambda_handler(event, context):
 
     if body is not None:
         response = json.loads(body)
+        
     else:
         response = {
           'message' : 'Hello from lambda!'
