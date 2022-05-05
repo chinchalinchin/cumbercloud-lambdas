@@ -22,7 +22,7 @@ phases:
       - |
         docker build --tag ${APPLICATION}-forward-email:latest \
                       --file Dockerfile \
-                      ./lambdas/email/forward/
+                      ./lambdas/mail/forward/
         docker tag ${APPLICATION}-forward-email:latest \
                     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
@@ -30,7 +30,7 @@ phases:
       - |
         docker build --tag ${APPLICATION}-send-email:latest \
                       --file Dockerfile \
-                      ./lambdas/email/send/
+                      ./lambdas/mail/send/
         docker tag ${APPLICATION}-send-email:latest \
                     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest

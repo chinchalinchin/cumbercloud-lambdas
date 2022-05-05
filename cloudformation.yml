@@ -22,6 +22,40 @@ Resources:
   # APPLICATION RESOURRCES
   ##############################################
 
+  TokenLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Description: !Sub Lambda function for forwarding emails sent to the ${applicationName}-email S3 bucket to an external address. Triggered by an SES Receipt Ruleset.
+      FunctionName: !Sub ${applicationName}-token
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-token:latest
+      PackageType: Image
+      Role: !GetAtt LambdaExecutorRole.Arn
+      Timeout: 60
+      Environment:
+        Variables:
+          USERPOOL: !Ref CognitoUserPool
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
+
+  RegisterLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Description: !Sub Lambda function for forwarding emails sent to the ${applicationName}-email S3 bucket to an external address. Triggered by an SES Receipt Ruleset.
+      FunctionName: !Sub ${applicationName}-register
+      Code:
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-register:latest
+      PackageType: Image
+      Role: !GetAtt LambdaExecutorRole.Arn
+      Timeout: 60
+      Environment:
+        Variables:
+          USERPOOL: !Ref CognitoUserPool
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
+
   ForwardEmailLambda:
     Type: AWS::Lambda::Function
     Properties: 
@@ -554,6 +588,48 @@ Resources:
       ImageScanningConfiguration: 
         ScanOnPush: true
       RepositoryName: !Sub "${applicationName}-forward-email"
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ECRCodeBuildPermissions
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "ecr:BatchGetImage"
+              - "ecr:GetDownloadUrlForLayer"
+      Tags:
+        - Key: Application
+          Value: !Ref applicationName
+
+  LambdaTokenECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration: 
+        ScanOnPush: true
+      RepositoryName: !Sub "${applicationName}-token"
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ECRCodeBuildPermissions
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "ecr:BatchGetImage"
+              - "ecr:GetDownloadUrlForLayer"
+      Tags:
+        - Key: Application
+          Value: !Ref applicationName
+  
+  LambdaForwardECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration: 
+        ScanOnPush: true
+      RepositoryName: !Sub "${applicationName}-register"
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
