@@ -22,13 +22,13 @@ Resources:
   # APPLICATION RESOURRCES
   ##############################################
 
-  TokenLambda:
+  RegisterLambda:
     Type: AWS::Lambda::Function
     Properties: 
-      Description: !Sub Lambda function for forwarding emails sent to the ${applicationName}-email S3 bucket to an external address. Triggered by an SES Receipt Ruleset.
-      FunctionName: !Sub ${applicationName}-token
+      Description: !Sub Lambda function for registering with ${applicationName} Cognito Userpool.
+      FunctionName: !Sub ${applicationName}-register
       Code:
-        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-token:latest
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-register:latest
       PackageType: Image
       Role: !GetAtt LambdaExecutorRole.Arn
       Timeout: 60
@@ -39,13 +39,13 @@ Resources:
         - Key: "Application"
           Value: !Ref applicationName
 
-  RegisterLambda:
+  TokenLambda:
     Type: AWS::Lambda::Function
     Properties: 
-      Description: !Sub Lambda function for forwarding emails sent to the ${applicationName}-email S3 bucket to an external address. Triggered by an SES Receipt Ruleset.
-      FunctionName: !Sub ${applicationName}-register
+      Description: !Sub Lambda for retrieving an authorization token from ${applicationName} Cognito UserPool.
+      FunctionName: !Sub ${applicationName}-token
       Code:
-        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-register:latest
+        ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-token:latest
       PackageType: Image
       Role: !GetAtt LambdaExecutorRole.Arn
       Timeout: 60
