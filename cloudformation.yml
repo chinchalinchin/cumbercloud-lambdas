@@ -18,6 +18,10 @@ Parameters:
     Description: Domain name that is hosting the application
 
 Resources:
+  ##############################################
+  # APPLICATION RESOURRCES
+  ##############################################
+
   ForwardEmailLambda:
     Type: AWS::Lambda::Function
     Properties: 
@@ -50,55 +54,153 @@ Resources:
           MailRecipient: design@cumberland-cloud.com
           Region: !Sub ${AWS::Region}
 
-  LambdaEmailECR:
-    Type: AWS::ECR::Repository
-    Description: ECR to hold image of email lambda
+  RestAPI:
+    Type: AWS::ApiGateway::RestApi
     Properties:
-      ImageScanningConfiguration:
-        ScanOnPush: true
-      RepositoryName: !Sub "${applicationName}-send-email"
-      RepositoryPolicyText:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: ECRCodeBuildPermissions
-            Effect: Allow
-            Principal:
-              Service:
-                - codebuild.amazonaws.com
-            Action:
-              - "ecr:BatchGetImage"
-              - "ecr:GetDownloadUrlForLayer"
-      Tags:
-        - Key: Application
-          Value: !Ref applicationName
+      Name: !Sub ${applicationName}-rest-api
 
-  LambdaForwardECR:
-    Type: AWS::ECR::Repository
-    Description: ECR to hold image of email forwarding Lambda
+  CloudWatch:
+    Type: AWS::ApiGateway::Account
     Properties:
-      ImageScanningConfiguration: 
-        ScanOnPush: true
-      RepositoryName: !Sub "${applicationName}-forward-email"
-      RepositoryPolicyText:
-        Version: "2012-10-17"
-        Statement:
-          - Sid: ECRCodeBuildPermissions
-            Effect: Allow
-            Principal:
-              Service:
-                - codebuild.amazonaws.com
-            Action:
-              - "ecr:BatchGetImage"
-              - "ecr:GetDownloadUrlForLayer"
-      Tags:
-        - Key: Application
-          Value: !Ref applicationName
+      CloudWatchRoleArn: !GetAtt APILoggerRole.Arn
+  
+  CloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub ${applicationName}-log-group
+      RetentionInDays: 30
+  
+  RestAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref RestAPI
+      Description: !Sub "${applicationName}'s RestAPI deployment"
+      StageName: production
+      StageDescription:
+        AccessLogSetting:
+          DestinationArn: !GetAtt CloudWatchLogGroup.Arn
+        LoggingLevel: INFO
+        MetricsEnabled: True
+        MethodSettings:
+          - ResourcePath: "/*"
+            HttpMethod: "*"
+            LoggingLevel: INFO
+            MetricsEnabled: True
 
-  LambdaRepo:
-    Type: AWS::CodeCommit::Repository
+  AuthDomain:
+    Type: AWS::Cognito::UserPoolDomain
     Properties:
-      RepositoryName: !Sub "${applicationName}-lambdas"
-      RepositoryDescription: !Sub "A repository for the ${applicationName} Lambda function source code."
+      UserPoolId: !Ref CognitoUserPool
+      Domain: !Ref applicationName
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub ${applicationName}-userpool
+      UsernameConfiguration:
+        CaseSensitive: false
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireSymbols: true
+          RequireUppercase: true
+          TemporaryPasswordValidityDays: 3
+      Schema:
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Name: email
+        - AttributeDataType: String
+          DeveloperOnlyAttribute: false
+          Mutable: true
+          Name: name
+  
+  APIClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: !Sub ${applicationName}-api-client
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      CallbackURLs:
+        - !Sub "https://${domainName}"
+      ExplicitAuthFlows:
+        - "ALLOW_CUSTOM_AUTH"
+        - "ALLOW_REFRESH_TOKEN_AUTH"
+        - "ALLOW_USER_PASSWORD_AUTH"
+        - "ALLOW_USER_SRP_AUTH"
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: "minutes"
+        IdToken: "minutes"
+        RefreshToken: "days"
+      SupportedIdentityProviders:
+        - COGNITO
+
+  ApiGatewayAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      RestApiId: !Ref RestAPI
+      Name: !Sub ${applicationName}-api-authorizer
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.authorization
+      ProviderARNs:
+        - !GetAtt CognitoUserPool.Arn
+  
+  RootResource: 
+    Type: 'AWS::ApiGateway::Resource'
+    Properties: 
+      RestApiId: !Ref RestAPI
+      ParentId: !GetAtt RestAPI.RootResourceId
+      PathPart: v1
+
+  SendEmailLambdaResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref RestAPI
+      ParentId: !Ref InnoLabRootResource
+      PathPart: mail
+
+  RestAPIDomainName:
+    Type: 'AWS::ApiGateway::DomainName'
+    Properties:
+      CertificateArn: !Ref certificateArn
+      DomainName: !Sub "api.${domainName}"
+      EndpointConfiguration:
+        Types:
+          - EDGE
+
+  RestAPIBasePathMapping:
+    Type: 'AWS::ApiGateway::BasePathMapping'
+    Properties:
+      DomainName: !Ref RestAPIDomainName
+      RestApiId: !Ref RestAPI
+      Stage: production
+
+  RestAPIRoute53RecordSetGroup:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneId: !Ref hostedZoneId
+      RecordSets:
+        - Name: !Sub "api.${domainName}"
+          Type: A
+          AliasTarget:
+            HostedZoneId: !GetAtt RestAPIDomainName.DistributionHostedZoneId
+            DNSName: !GetAtt RestAPIDomainName.DistributionDomainName
+
+  ##############################################
+  # IAM RESOURCES
+  ##############################################
 
   LambdaExecutorRole: 
     Type: AWS::IAM::Role
@@ -141,7 +243,28 @@ Resources:
                   - logs:PutLogEvents
                 Resource: '*'
       RoleName: !Sub ${applicationName}-lambda-executor
-      
+  
+  APILoggerRole:
+    Type: AWS::IAM::Role
+    Description: Role to allow API Gateway to push logs to CloudWatch
+    Properties:
+      # Path: !Sub "/${applicationName}/"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      RoleName: !Sub ${applicationName}-apigateway-executor
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
+          
   CloudWatchEventExecutor:
     Type: AWS::IAM::Role
     Properties:
@@ -312,6 +435,60 @@ Resources:
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:*/${applicationName}*"
                 Effect: Allow
       RoleName: !Sub ${applicationName}-codepipeline-exector
+
+  #############################################
+  # CICD RESOURCES
+  ##############################################
+
+  LambdaEmailECR:
+    Type: AWS::ECR::Repository
+    Description: ECR to hold image of email lambda
+    Properties:
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      RepositoryName: !Sub "${applicationName}-send-email"
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ECRCodeBuildPermissions
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "ecr:BatchGetImage"
+              - "ecr:GetDownloadUrlForLayer"
+      Tags:
+        - Key: Application
+          Value: !Ref applicationName
+
+  LambdaForwardECR:
+    Type: AWS::ECR::Repository
+    Description: ECR to hold image of email forwarding Lambda
+    Properties:
+      ImageScanningConfiguration: 
+        ScanOnPush: true
+      RepositoryName: !Sub "${applicationName}-forward-email"
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ECRCodeBuildPermissions
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "ecr:BatchGetImage"
+              - "ecr:GetDownloadUrlForLayer"
+      Tags:
+        - Key: Application
+          Value: !Ref applicationName
+
+  LambdaRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Sub "${applicationName}-lambdas"
+      RepositoryDescription: !Sub "A repository for the ${applicationName} Lambda function source code."
 
   PipelineArtifacts:
     Type: AWS::S3::Bucket
