@@ -9,7 +9,6 @@ def lambda_handler(event, context):
     
     if raw is not None:
         body = json.loads(raw)
-        
         print(body)
 
     response = {
