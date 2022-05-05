@@ -4,7 +4,6 @@ phases:
 
   install: 
     runtime-versions:
-      nodejs: latest 
       python: 3.9
     commands:
       # start up Docker
