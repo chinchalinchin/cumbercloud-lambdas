@@ -25,6 +25,7 @@ Resources:
   ForwardEmailLambda:
     Type: AWS::Lambda::Function
     Properties: 
+      Description: !Sub Lambda function for forwarding emails sent to the ${applicationName}-email S3 bucket to an external address. Triggered by an SES Receipt Ruleset.
       FunctionName: !Sub ${applicationName}-forward-email
       Code:
         ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-forward-email:latest
@@ -38,10 +39,14 @@ Resources:
           MailSender: design@cumberland-cloud.com
           MailRecipient: chinchalinchin@gmail.com
           Region: !Sub ${AWS::Region}
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
 
   SendEmailLambda:
     Type: AWS::Lambda::Function
     Properties:
+      Description: !Sub Lambda function for sending emails from an ${applicationName}. Triggered by an API Gateway endpoint.
       FunctionName: !Sub ${applicationName}-send-email
       Code:
         ImageUri: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${applicationName}-send-email:latest
@@ -53,11 +58,18 @@ Resources:
           MailSender: form@cumberland-cloud.com
           MailRecipient: design@cumberland-cloud.com
           Region: !Sub ${AWS::Region}
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
 
   RestAPI:
     Type: AWS::ApiGateway::RestApi
     Properties:
+      Description: !Sub REST API for ${applicationName} backend functionality
       Name: !Sub ${applicationName}-rest-api
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
 
   CloudWatch:
     Type: AWS::ApiGateway::Account
@@ -69,12 +81,15 @@ Resources:
     Properties: 
       LogGroupName: !Sub ${applicationName}-log-group
       RetentionInDays: 30
-  
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
+
   RestAPIDeployment:
     Type: AWS::ApiGateway::Deployment
     Properties:
       RestApiId: !Ref RestAPI
-      Description: !Sub "${applicationName}'s RestAPI deployment"
+      Description: !Sub "${applicationName} Rest API production deployment"
       StageName: production
       StageDescription:
         AccessLogSetting:
@@ -86,6 +101,9 @@ Resources:
             HttpMethod: "*"
             LoggingLevel: INFO
             MetricsEnabled: True
+    DependsOn:
+      - SendEmailMethod
+      - SendEmailCORSMethod
 
   AuthDomain:
     Type: AWS::Cognito::UserPoolDomain
@@ -118,6 +136,17 @@ Resources:
           Mutable: true
           Name: name
   
+  CognitoAdmin:
+    Type: "AWS::Cognito::UserPoolUser"
+    Properties:
+      Username: "gmoore@cumberland-cloud.com"
+      UserPoolId: !Ref CognitoUserPool
+      UserAttributes:
+        - Name: "email"
+          Value: "grant@cumberland-cloud.com"
+        - Name: "name"
+          Value: "Grant Moore"
+          
   APIClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -156,7 +185,7 @@ Resources:
       IdentitySource: method.request.header.authorization
       ProviderARNs:
         - !GetAtt CognitoUserPool.Arn
-  
+
   RootResource: 
     Type: 'AWS::ApiGateway::Resource'
     Properties: 
@@ -164,13 +193,13 @@ Resources:
       ParentId: !GetAtt RestAPI.RootResourceId
       PathPart: v1
 
-  SendEmailLambdaResource:
+  SendEmailResource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId: !Ref RestAPI
-      ParentId: !Ref InnoLabRootResource
+      ParentId: !Ref RootResource
       PathPart: mail
-
+  
   SendEmailMethod:
     Type: 'AWS::ApiGateway::Method'
     Properties:
@@ -190,7 +219,7 @@ Resources:
     Properties:
       AuthorizationType: NONE
       RestApiId: !Ref RestAPI
-      ResourceId: !Ref PathResource
+      ResourceId: !Ref SendEmailResource
       HttpMethod: OPTIONS
       Integration:
         IntegrationResponses:
@@ -213,7 +242,7 @@ Resources:
             method.response.header.Access-Control-Allow-Headers: false
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
-            
+
   RestAPIDomainName:
     Type: 'AWS::ApiGateway::DomainName'
     Properties:
@@ -222,6 +251,9 @@ Resources:
       EndpointConfiguration:
         Types:
           - EDGE
+      Tags:
+        - Key: "Application"
+          Value: !Ref applicationName
 
   RestAPIBasePathMapping:
     Type: 'AWS::ApiGateway::BasePathMapping'
@@ -254,10 +286,11 @@ Resources:
   # IAM RESOURCES
   ##############################################
 
-  LambdaExecutorRole: 
+  LambdaExecutorRole:
     Type: AWS::IAM::Role
-    Description: Role to allow Lambda functions to access other services
     Properties:
+      Description: !Sub Assumed role for Lambda to access ${applicationName} resource
+      Path: !Sub "/${applicationName}/"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -295,12 +328,12 @@ Resources:
                   - logs:PutLogEvents
                 Resource: '*'
       RoleName: !Sub ${applicationName}-lambda-executor
-  
+
   APILoggerRole:
     Type: AWS::IAM::Role
-    Description: Role to allow API Gateway to push logs to CloudWatch
     Properties:
-      # Path: !Sub "/${applicationName}/"
+      Description: !Sub Assumed role for API Gateway to accecss ${applicationName} resources.
+      Path: !Sub "/${applicationName}/"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
