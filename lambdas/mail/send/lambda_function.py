@@ -4,7 +4,6 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 
-
 sender = os.environ['MailSender']
 recipient = os.environ['MailRecipient']
 
