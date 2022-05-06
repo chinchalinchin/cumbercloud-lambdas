@@ -35,6 +35,7 @@ Resources:
       Environment:
         Variables:
           USERPOOL: !Ref CognitoUserPool
+          CLIENT: !Ref APIClient
       Tags:
         - Key: "Application"
           Value: !Ref applicationName
@@ -52,6 +53,7 @@ Resources:
       Environment:
         Variables:
           USERPOOL: !Ref CognitoUserPool
+          CLIENT: !Ref APIClient
       Tags:
         - Key: "Application"
           Value: !Ref applicationName
