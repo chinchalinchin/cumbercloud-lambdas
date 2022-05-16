@@ -5,16 +5,11 @@ import pprint
 import boto3 
 from botocore.exceptions import ClientError
 
-USERPOOL = os.environ['USERPOOL']
-CLIENT = os.environ['CLIENT']
-
-def cognito_idp():
-    return boto3.client('cognito-idp')
 
 def lambda_handler(event, context):
 
     pprint.pprint(event)
-    
+
     body = event.get('body', None)
 
     if body is not None:
@@ -38,9 +33,9 @@ def lambda_handler(event, context):
           "statusCode": status,
           "headers": {
               "Access-Control-Allow-Headers": "Content-Type",
-              "Allow": "OPTIONS, POST",
+              "Allow": "OPTIONS, GET, POST",
               "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "OPTIONS,POST",
+              "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
               "Content-Type": "application/json"
           },
           "body": json.dumps(response)
