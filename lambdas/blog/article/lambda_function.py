@@ -1,5 +1,6 @@
 import json
 import os
+import pprint
 
 import boto3 
 from botocore.exceptions import ClientError
@@ -11,6 +12,9 @@ def cognito_idp():
     return boto3.client('cognito-idp')
 
 def lambda_handler(event, context):
+
+    pprint.pprint(event)
+    
     body = event.get('body', None)
 
     if body is not None:
