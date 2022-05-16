@@ -49,26 +49,35 @@ phases:
         docker tag ${APPLICATION}-register:latest \
                     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
+      # Build article lambda
+      - | 
+        docker build --tag ${APPLICATION}-article:latest \
+                      --file Dockerfile \
+                      ./lambdas/blog/article/
+        docker tag ${APPLICATION}-article:latest \
+                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-article:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-article:latest
 
   post_build:
     commands:
-      # Push email forwarding lambda
+      # Deploy email forwarding lambda
       - |
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-forward-email \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-forward-email:latest
-      # Push email sending lambda
+      # Deploy email sending lambda
       - |
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-send-email \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-send-email:latest
-      # Push token lambda
+      # Deploy token lambda
       - |
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-token \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-token:latest
-      # Push register lambda
+      # Deploy register lambda
       - |
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-register \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
+      # Deploy article lambda 
