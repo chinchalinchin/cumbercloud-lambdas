@@ -536,7 +536,7 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: 
         !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestAPI}/production/*
-        
+
   ##############################################
   # IAM RESOURCES
   ##############################################
@@ -889,6 +889,27 @@ Resources:
         - Key: Application
           Value: !Ref applicationName
 
+  LambdaArticleECR:
+    Type: AWS::ECR::Repository
+    Properties:
+      ImageScanningConfiguration: 
+        ScanOnPush: true
+      RepositoryName: !Sub "${applicationName}-article"
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ECRCodeBuildPermissions
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - "ecr:BatchGetImage"
+              - "ecr:GetDownloadUrlForLayer"
+      Tags:
+        - Key: Application
+          Value: !Ref applicationName
+          
   LambdaRepo:
     Type: AWS::CodeCommit::Repository
     Properties:
