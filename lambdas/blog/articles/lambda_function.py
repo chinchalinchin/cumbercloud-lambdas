@@ -15,37 +15,17 @@ def lambda_handler(event, context):
 
     pprint.pprint(event)
 
-    if event['httpMethod'] == 'POST':
-        body = event.get('body', None)
-
-        if body is not None:
-            try:
-                response = get_article_table().put_item(
-                    Item=json.loads(body)
-                )
-                status = 200
-            except ClientError as e:
-                response, status = e, 500
-            
-        else:
-            response = {
-                'message' : 'No body in request'
-            }
-            status = 400
-
-    elif event['httpMethod'] == 'GET':
+    if event['httpMethod'] == 'GET':
         params = event.get('queryStringParameters', None)
 
-        if params is not None and params.get('id', None) is not None:
-            response = get_article_table().get_item(
-                Key = params
-            )['Item']
+        if params is None:
+            response = get_article_table().scan()
             status = 200
         else:
             response = {
-                'message': 'No id provided in query parameters'
+                'message': 'TODO: filter by param'
             }
-            status = 400
+            status = 200
 
     else:
         response = {
