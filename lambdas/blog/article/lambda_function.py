@@ -14,7 +14,7 @@ def get_article_table():
 def lambda_handler(event, context):
 
     pprint.pprint(event)
-    
+
     if event['httpMethod'] == 'POST':
         body = event.get('body', None)
 
@@ -34,10 +34,18 @@ def lambda_handler(event, context):
             status = 400
 
     elif event['httpMethod'] == 'GET':
-        response = {
-            'message': 'hello'
-        }
-        status = 200
+        params = event.get('queryStringParameters', None)
+        
+        if params is not None and params.get('id', None) is not None:
+            response = get_article_table().get_item(
+                Key = params.get('id')
+            )
+            status = 200
+        else:
+            response = {
+                'message': 'No id provided in query parameters'
+            }
+            status = 400
 
     else:
         response = {
