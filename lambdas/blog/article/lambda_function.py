@@ -1,11 +1,14 @@
 import json
 import os
-import pprint
 
 import boto3 
 from botocore.exceptions import ClientError
 
 APPLICATION = os.environ['APPLICATION']
+
+def get_article_table():
+    dynamodb = boto3.resource('dynamodb')
+    return dynamodb.Table(f'{APPLICATION}-articles')
 
 def lambda_handler(event, context):
 
@@ -14,11 +17,10 @@ def lambda_handler(event, context):
 
         if body is not None:
             parsed_body = json.loads(body)
-            pprint.pprint(parsed_body)
             try:
-                response = {
-                    'something': 'goes here'
-                }
+                response = get_article_table().put_item(
+                    Item=parsed_body
+                )
                 status = 200
             except ClientError as e:
                 response, status = e, 500
