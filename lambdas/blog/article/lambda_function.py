@@ -35,10 +35,11 @@ def lambda_handler(event, context):
 
     elif event['httpMethod'] == 'GET':
         params = event.get('queryStringParameters', None)
-        
+
         if params is not None and params.get('id', None) is not None:
+            pprint.pprint(params)
             response = get_article_table().get_item(
-                Key = params.get('id')
+                Key = params
             )
             status = 200
         else:
