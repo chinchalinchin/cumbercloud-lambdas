@@ -14,23 +14,23 @@ def lambda_handler(event, context):
     body = event.get('body', None)
 
     if body is not None:
-        response = json.loads(body)
+        parsed_body = json.loads(body)
         try:
             response = cognito_idp().sign_up(
-                    UserName=body['username'],
-                    Password=body['password'],
+                    UserName=parsed_body['username'],
+                    Password=parsed_body['password'],
                     UserAttributes=[
                         {
                             'Name': 'email',
-                            'Value': body['email']
+                            'Value': parsed_body['email']
                         },
                         {
                             'Name': 'first_name',
-                            'Value': body['first']
+                            'Value': parsed_body['first']
                         },
                         {
                             'Name': 'last_name',
-                            'Value': body['last']
+                            'Value': parsed_body['last']
                         }
                     ],
                     ClientId=CLIENT,

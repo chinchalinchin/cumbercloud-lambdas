@@ -14,13 +14,13 @@ def lambda_handler(event, context):
     body = event.get('body', None)
 
     if body is not None:
-        response = json.loads(body)
+        parsed_body = json.loads(body)
         try:
             response = cognito_idp().initiate_auth(
                     AuthFlow='USER_PASSWORD_AUTH',
                     AuthParameters={
-                        'USERNAME': body['username'],
-                        'PASSWORD': body['password']
+                        'USERNAME': parsed_body['username'],
+                        'PASSWORD': parsed_body['password']
                     },
                     ClientId=CLIENT,
             )

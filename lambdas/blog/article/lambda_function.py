@@ -7,25 +7,30 @@ from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
 
-    pprint.pprint(event)
+    if event['httpMethod'] == 'POST':
+        body = event.get('body', None)
 
-    body = event.get('body', None)
-
-    if body is not None:
-        response = json.loads(body)
-        try:
-            response = {
-                'something'
-            }
-            status = 200
-        except ClientError as e:
-            response, status = e, 500
+        pprint.pprint(body)
         
-    else:
-        response = {
-          'message' : 'No body in request'
-        }
-        status = 400
+        if body is not None:
+            response = json.loads(body)
+            try:
+                response = {
+                    'something'
+                }
+                status = 200
+            except ClientError as e:
+                response, status = e, 500
+            
+        else:
+            response = {
+            'message' : 'No body in request'
+            }
+            status = 400
+
+    elif event['httpMethod'] == 'GET':
+        response = {}
+        status = 200
 
     return {
           "isBase64Encoded": False,
