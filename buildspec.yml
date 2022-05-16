@@ -83,5 +83,5 @@ phases:
       # Deploy article lambda 
       - |
         aws lambda update-function-code \
-                      --funcction-name ${APPLICATION}-article \
+                      --function-name ${APPLICATION}-article \
                       --image uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-article:latest
