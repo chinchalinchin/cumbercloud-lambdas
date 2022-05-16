@@ -84,4 +84,4 @@ phases:
       - |
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-article \
-                      --image uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-article:latest
+                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-article:latest
