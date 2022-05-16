@@ -17,23 +17,23 @@ def lambda_handler(event, context):
         parsed_body = json.loads(body)
         try:
             response = cognito_idp().sign_up(
-                    UserName=parsed_body['username'],
-                    Password=parsed_body['password'],
-                    UserAttributes=[
-                        {
-                            'Name': 'email',
-                            'Value': parsed_body['email']
-                        },
-                        {
-                            'Name': 'first_name',
-                            'Value': parsed_body['first']
-                        },
-                        {
-                            'Name': 'last_name',
-                            'Value': parsed_body['last']
-                        }
-                    ],
-                    ClientId=CLIENT,
+                UserName=parsed_body['username'],
+                Password=parsed_body['password'],
+                UserAttributes=[
+                    {
+                        'Name': 'email',
+                        'Value': parsed_body['email']
+                    },
+                    {
+                        'Name': 'first_name',
+                        'Value': parsed_body['first']
+                    },
+                    {
+                        'Name': 'last_name',
+                        'Value': parsed_body['last']
+                    }
+                ],
+                ClientId=CLIENT,
             )
             status = 200
         except ClientError as e:

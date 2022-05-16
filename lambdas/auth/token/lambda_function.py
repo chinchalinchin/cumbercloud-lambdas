@@ -17,12 +17,12 @@ def lambda_handler(event, context):
         parsed_body = json.loads(body)
         try:
             response = cognito_idp().initiate_auth(
-                    AuthFlow='USER_PASSWORD_AUTH',
-                    AuthParameters={
-                        'USERNAME': parsed_body['username'],
-                        'PASSWORD': parsed_body['password']
-                    },
-                    ClientId=CLIENT,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters={
+                    'USERNAME': parsed_body['username'],
+                    'PASSWORD': parsed_body['password']
+                },
+                ClientId=CLIENT,
             )
             status = 200
         except ClientError as e:

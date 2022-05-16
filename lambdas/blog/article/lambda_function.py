@@ -11,7 +11,7 @@ def lambda_handler(event, context):
         body = event.get('body', None)
 
         pprint.pprint(body)
-        
+
         if body is not None:
             response = json.loads(body)
             try:
@@ -29,8 +29,16 @@ def lambda_handler(event, context):
             status = 400
 
     elif event['httpMethod'] == 'GET':
-        response = {}
+        response = {
+            'message': 'hello'
+        }
         status = 200
+
+    else:
+        response = {
+            'message': 'Method Not Allowed'
+        }
+        status = 405
 
     return {
           "isBase64Encoded": False,
