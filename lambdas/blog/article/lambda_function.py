@@ -5,7 +5,6 @@ import pprint
 import boto3 
 from botocore.exceptions import ClientError
 
-
 def lambda_handler(event, context):
 
     pprint.pprint(event)
