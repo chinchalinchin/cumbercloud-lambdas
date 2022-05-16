@@ -1,5 +1,6 @@
 import json
 import os
+import pprint
 
 import boto3 
 from botocore.exceptions import ClientError
@@ -12,14 +13,15 @@ def get_article_table():
 
 def lambda_handler(event, context):
 
+    pprint.pprint(event)
+    
     if event['httpMethod'] == 'POST':
         body = event.get('body', None)
 
         if body is not None:
-            parsed_body = json.loads(body)
             try:
                 response = get_article_table().put_item(
-                    Item=parsed_body
+                    Item=json.loads(body)
                 )
                 status = 200
             except ClientError as e:
