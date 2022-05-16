@@ -19,7 +19,7 @@ def lambda_handler(event, context):
         params = event.get('queryStringParameters', None)
 
         if params is None:
-            response = get_article_table().scan()
+            response = get_article_table().scan()['Items']
             status = 200
         else:
             response = {
