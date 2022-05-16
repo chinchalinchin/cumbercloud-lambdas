@@ -5,18 +5,19 @@ import pprint
 import boto3 
 from botocore.exceptions import ClientError
 
+APPLICATION = os.environ['APPLICATION']
+
 def lambda_handler(event, context):
 
     if event['httpMethod'] == 'POST':
         body = event.get('body', None)
 
-        pprint.pprint(body)
-
         if body is not None:
-            response = json.loads(body)
+            parsed_body = json.loads(body)
+            pprint.pprint(parsed_body)
             try:
                 response = {
-                    'something'
+                    'something': 'goes here'
                 }
                 status = 200
             except ClientError as e:
@@ -24,7 +25,7 @@ def lambda_handler(event, context):
             
         else:
             response = {
-            'message' : 'No body in request'
+                'message' : 'No body in request'
             }
             status = 400
 
