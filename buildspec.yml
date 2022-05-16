@@ -49,6 +49,14 @@ phases:
         docker tag ${APPLICATION}-register:latest \
                     $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
+      # Build authorize lambda
+      - | 
+        docker build --tag ${APPLICATION}-authorize:latest \
+                      --file Dockerfile \
+                      ./lambdas/auth/authorize/
+        docker tag ${APPLICATION}-authorize:latest \
+                    $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-authorize:latest
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-authorize:latest
       # Build article lambda
       - | 
         docker build --tag ${APPLICATION}-article:latest \
@@ -80,6 +88,11 @@ phases:
         aws lambda update-function-code \
                       --function-name ${APPLICATION}-register \
                       --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-register:latest
+      # Deploy authorize lambda
+      - |
+        aws lambda update-function-code \
+                      --function-name ${APPLICATION}-authorize \
+                      --image-uri $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${APPLICATION}-authorize:latest
       # Deploy article lambda 
       - |
         aws lambda update-function-code \

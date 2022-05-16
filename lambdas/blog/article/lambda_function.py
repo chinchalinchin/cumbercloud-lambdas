@@ -37,7 +37,6 @@ def lambda_handler(event, context):
         params = event.get('queryStringParameters', None)
 
         if params is not None and params.get('id', None) is not None:
-            pprint.pprint(params)
             response = get_article_table().get_item(
                 Key = params
             )
