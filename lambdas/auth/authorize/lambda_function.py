@@ -10,6 +10,7 @@ CLIENT = os.environ['CLIENT']
 APPLICATION = os.environ['APPLICATION']
 
 def lambda_handler(event, context):
+    pprint.pprint(event)
     body = event.get('body', None)
 
     if body is not None:
