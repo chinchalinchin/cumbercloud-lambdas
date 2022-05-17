@@ -5,20 +5,18 @@ from typing import Dict, List, Union
 
 import requests
 import jwt
-import boto3 
 
 from jwt.algorithms import RSAAlgorithm
-from botocore.exceptions import ClientError
 
-ACCOUNT=os.environ['ACCOUNT']
-API=os.environ['API']
-USERPOOL = os.environ['USERPOOL']
-CLIENT = os.environ['CLIENT']
-APPLICATION = os.environ['APPLICATION']
+ACCOUNT_ID = os.environ['ACCOUNT_ID']
+API_ID = os.environ['API_ID']
+USERPOOL_ID = os.environ['USERPOOL_ID']
+CLIENT_ID = os.environ['CLIENT_ID']
 REGION = os.environ['REGION']
+GROUP = os.environ.setdefault('GROUP', None)
 
 def key_url() -> str:
-    return 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(REGION, USERPOOL)
+    return 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(REGION, USERPOOL_ID)
 
 def lambda_handler(event: dict, context: dict):
     token = event['authorizationToken'].split(' ')[-1]
@@ -37,9 +35,16 @@ def lambda_handler(event: dict, context: dict):
             decoded = decode_token(token, public_key)
             pprint.pprint(decoded)
 
+            if GROUP is not None:
+                if GROUP in decoded['cognito:groups']:
+                    return policy(context, False)
+                return policy(context, True)
+
+            return policy(context, False)
+
         except Exception as e:
             print(e)
-            return
+            return policy(context, True)
 
 def policy(context: dict, deny: bool) -> dict:
     return {
@@ -50,7 +55,7 @@ def policy(context: dict, deny: bool) -> dict:
             {
                 "Action": "execute-api:Invoke",
                 "Effect": "Deny" if deny else "Allow",
-                "Resource": f"arn:aws:execute-api:{REGION}:{ACCOUNT}:{API}/*"
+                "Resource": f"arn:aws:execute-api:{REGION}:{ACCOUNT_ID}:{API_ID}/*"
             }
             ]
         }
@@ -65,4 +70,4 @@ def find_key(keys: List[Dict], kid: str) -> Union[dict,None]:
     return None
 
 def decode_token(token: str, publicKey: str)->dict:
-    return jwt.decode(token, publicKey, algorithms=['RS256'], audience=CLIENT)
+    return jwt.decode(token, publicKey, algorithms=['RS256'], audience=CLIENT_ID)
