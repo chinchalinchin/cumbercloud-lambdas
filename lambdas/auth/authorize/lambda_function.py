@@ -22,13 +22,18 @@ def key_url() -> str:
 
 def lambda_handler(event: dict, context: dict):
     pprint.pprint(event)
-    pprint.pprint(context)
+    pprint.pprint(vars(context))
     token = event['authorizationToken'].split(' ')[-1]
     header = jwt.get_unverified_header(token)
 
     keys = requests.get(key_url()).json()
+
+    print(keys)
+
     kid = header['kid']
 
+    print(kid)
+    
     jwk = find_key(keys, kid)
 
     if jwk is not None:
@@ -57,7 +62,9 @@ def policy(context: dict, deny: bool) -> dict:
     }
 
 def find_key(keys, kid) -> Union[dict,None]:
+    print(keys)
     for key in keys:
+        print(key)
         if key['kid'] == kid:
             return key
     return None
