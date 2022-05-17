@@ -21,3 +21,5 @@ The source code for this Lambda can be found [here](https://github.com/chinchali
 6. **REGION**: Region where the API gateway is hosted. 
 
 7. **GROUP**: *Optional*. If `GROUP` is specified, the user associated with incoming request must belong to the specified group name, found in the `cognito:groups` property in the JWT payload. If the user does not belong to this group, request will be rejected. If `GROUP` is not specified, function will only validate the authenticity of the JWT.
+
+### Lambda Execution Role

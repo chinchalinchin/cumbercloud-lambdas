@@ -26,8 +26,6 @@ def lambda_handler(event: dict, context: dict):
     kid = header['kid']
     jwk = find_key(keys, kid)
 
-    print(jwk)
-
     if jwk is not None:
         public_key = RSAAlgorithm.from_jwk(json.dumps(jwk))
         print(public_key)
@@ -47,8 +45,9 @@ def lambda_handler(event: dict, context: dict):
             return policy(context, True)
 
 def policy(context: dict, deny: bool) -> dict:
+    print(vars(context))
     return {
-        "principalId": context['authorizer']['principalId'],
+        "principalId": context.authorizer['principalId'],
         "policyDocument": {
             "Version": "2012-10-17",
             "Statement": [
