@@ -28,14 +28,17 @@ def lambda_handler(event: dict, context: dict):
     kid = header['kid']
     jwk = find_key(keys, kid)
 
+    print(jwk)
+
     if jwk is not None:
         public_key = RSAAlgorithm.from_jwk(json.dumps(jwk))
-
+        print(public_key)
         try:
             decoded = decode_token(token, public_key)
             pprint.pprint(decoded)
 
         except Exception as e:
+            print(e)
             return
 
 def policy(context: dict, deny: bool) -> dict:
@@ -54,7 +57,9 @@ def policy(context: dict, deny: bool) -> dict:
     }
 
 def find_key(keys: List[Dict], kid: str) -> Union[dict,None]:
+    print(keys)
     for key in keys:
+        print(key)
         if key['kid'] == kid:
             return key
     return None
