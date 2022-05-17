@@ -1,5 +1,6 @@
 import json
 import os
+import pprint
 
 import boto3 
 from botocore.exceptions import ClientError
@@ -13,6 +14,7 @@ def lambda_handler(event, context):
 
     if body is not None:
         parsed_body = json.loads(body)
+        pprint.pprint(parsed_body)
         try:
             response ={
                 'message': 'something'
