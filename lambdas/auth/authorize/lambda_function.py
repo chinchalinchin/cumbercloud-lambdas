@@ -1,7 +1,7 @@
 import json
 import os
 import pprint
-from typing import Union
+from typing import Dict, List, Union
 
 import requests
 import jwt
@@ -21,19 +21,11 @@ def key_url() -> str:
     return 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(REGION, USERPOOL)
 
 def lambda_handler(event: dict, context: dict):
-    pprint.pprint(event)
-    pprint.pprint(vars(context))
     token = event['authorizationToken'].split(' ')[-1]
     header = jwt.get_unverified_header(token)
 
-    keys = requests.get(key_url()).json()
-
-    print(keys)
-
+    keys = requests.get(key_url()).json()['keys']
     kid = header['kid']
-
-    print(kid)
-    
     jwk = find_key(keys, kid)
 
     if jwk is not None:
@@ -61,10 +53,8 @@ def policy(context: dict, deny: bool) -> dict:
         }
     }
 
-def find_key(keys, kid) -> Union[dict,None]:
-    print(keys)
+def find_key(keys: List[Dict], kid: str) -> Union[dict,None]:
     for key in keys:
-        print(key)
         if key['kid'] == kid:
             return key
     return None
