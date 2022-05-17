@@ -28,26 +28,24 @@ def lambda_handler(event: dict, context: dict):
 
     if jwk is not None:
         public_key = RSAAlgorithm.from_jwk(json.dumps(jwk))
-        print(public_key)
         try:
             decoded = decode_token(token, public_key)
             pprint.pprint(decoded)
 
             if GROUP is not None:
                 if GROUP in decoded['cognito:groups']:
-                    return policy(context, False)
-                return policy(context, True)
+                    return policy(decoded['cognito:username'], False)
+                return policy(decoded['cognito:username'], True)
 
-            return policy(context, False)
+            return policy(decoded['cognito:username'], False)
 
         except Exception as e:
             print(e)
-            return policy(context, True)
+            return policy(None, True)
 
-def policy(context: dict, deny: bool) -> dict:
-    print(vars(context))
+def policy(principal: str, deny: bool) -> dict:
     return {
-        "principalId": context.authorizer['principalId'],
+        "principalId": principal,
         "policyDocument": {
             "Version": "2012-10-17",
             "Statement": [
