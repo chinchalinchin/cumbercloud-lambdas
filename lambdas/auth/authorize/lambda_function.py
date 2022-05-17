@@ -1,7 +1,7 @@
+from typing import Dict, List, Union
+
 import json
 import os
-import pprint
-from typing import Dict, List, Union
 
 import requests
 import jwt
@@ -30,7 +30,6 @@ def lambda_handler(event: dict, context: dict):
         public_key = RSAAlgorithm.from_jwk(json.dumps(jwk))
         try:
             decoded = decode_token(token, public_key)
-            pprint.pprint(decoded)
 
             if GROUP is not None:
                 if GROUP in decoded['cognito:groups']:
@@ -42,6 +41,7 @@ def lambda_handler(event: dict, context: dict):
         except Exception as e:
             print(e)
             return policy(None, True)
+    return policy(None, True)
 
 def policy(principal: str, deny: bool) -> dict:
     return {
@@ -49,19 +49,17 @@ def policy(principal: str, deny: bool) -> dict:
         "policyDocument": {
             "Version": "2012-10-17",
             "Statement": [
-            {
-                "Action": "execute-api:Invoke",
-                "Effect": "Deny" if deny else "Allow",
-                "Resource": f"arn:aws:execute-api:{REGION}:{ACCOUNT_ID}:{API_ID}/*"
-            }
+                {
+                    "Action": "execute-api:Invoke",
+                    "Effect": "Deny" if deny else "Allow",
+                    "Resource": f"arn:aws:execute-api:{REGION}:{ACCOUNT_ID}:{API_ID}/*"
+                }
             ]
         }
     }
 
 def find_key(keys: List[Dict], kid: str) -> Union[dict,None]:
-    print(keys)
     for key in keys:
-        print(key)
         if key['kid'] == kid:
             return key
     return None
