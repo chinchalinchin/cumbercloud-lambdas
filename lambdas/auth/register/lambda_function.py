@@ -4,8 +4,7 @@ import os
 import boto3 
 from botocore.exceptions import ClientError
 
-USERPOOL = os.environ['USERPOOL']
-CLIENT = os.environ['CLIENT']
+CLIENT_ID = os.environ['CLIENT_ID']
 
 def cognito_idp():
     return boto3.client('cognito-idp')
@@ -33,7 +32,7 @@ def lambda_handler(event, context):
                         'Value': parsed_body['last']
                     }
                 ],
-                ClientId=CLIENT,
+                ClientId=CLIENT_ID,
             )
             status = 200
         except ClientError as e:

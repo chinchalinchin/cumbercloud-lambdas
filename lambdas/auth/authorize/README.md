@@ -1,4 +1,4 @@
-# Lambda Authorizer
+# Authorize
 
 This is a **AWS Lambda** function for authorizing requests to an **API Gateway** through a **Cognito Userpool**. This function will [decode a Cognito JWT token](https://aws.amazon.com/premiumsupport/knowledge-center/decode-verify-cognito-json-token/) in a request's `Authorization` header and then return [a policy statement](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-lambda-authorizer-output.html) to inform **API Gateway** whether or not the incoming request is authorized to access the resource.
 
