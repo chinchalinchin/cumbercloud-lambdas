@@ -1,7 +1,7 @@
-from ctypes import Union
 import json
 import os
 import pprint
+from typing import Union
 
 import requests
 import jwt
